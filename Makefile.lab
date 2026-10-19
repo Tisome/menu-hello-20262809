@@ -1,0 +1,23 @@
+# Use: make -f Makefile.lab [all|rootfs|qemu|check]
+# Preserve the upstream Makefile, which targets Linux 3.18.6.
+.PHONY: all rootfs qemu check
+
+all: build/menu build/hello
+
+build:
+	mkdir -p build
+
+build/menu: test.c menu.c menu.h linktable.c linktable.h | build
+	gcc -m32 -std=gnu11 -Wall -Wextra -Wno-unused-parameter -static -pthread linktable.c menu.c test.c -o build/menu
+
+build/hello: hello.c | build
+	gcc -m32 -std=gnu11 -Wall -Wextra -static hello.c -o build/hello
+
+rootfs: all
+	python3 lab/make_initramfs.py
+
+qemu: rootfs
+	bash lab/run_qemu.sh
+
+check: rootfs
+	python3 lab/smoke_qemu.py
